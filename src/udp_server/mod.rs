@@ -48,7 +48,6 @@ pub fn listen(host: &str) -> Result<UdpServer, std::io::Error> {
                 return;
             }
             
-            #[allow(dead_code)]
             if let Ok((buff_size, socket_addr)) = socket.recv_from(&mut buff) {
                 log::info!("buff_size: {} socket_addr: {:?}", buff_size, socket_addr);
                 if buff_size != 0 {
