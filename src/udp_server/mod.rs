@@ -52,9 +52,9 @@ pub fn listen(host: &str) -> Result<UdpServer, std::io::Error> {
                 log::info!("buff_size: {} socket_addr: {:?}", buff_size, socket_addr);
                 if buff_size != 0 {
                     let body = str::from_utf8(&buff[..buff_size]).unwrap();
+                    log::trace!("body:{}", body.escape_debug());
                     tx2.send(body.to_string())
                         .expect("受信したデータの展開に失敗");
-                    log::trace!("body:{}", body.escape_debug());
                     buff = [0; 1024];
                 }
             }

@@ -7,15 +7,15 @@
         {
             "type": "lldb",
             "request": "launch",
-            "name": "Debug executable 'game_server'",
+            "name": "Debug executable 'udp_server'",
             "cargo": {
                 "args": [
                     "build",
-                    "--bin=game_server",
-                    "--package=game_server"
+                    "--bin=udp_server",
+                    "--package=udp_server"
                 ],
                 "filter": {
-                    "name": "game_server",
+                    "name": "udp_server",
                     "kind": "bin"
                 }
             },
@@ -26,16 +26,16 @@
         {
             "type": "lldb",
             "request": "launch",
-            "name": "Debug unit tests in executable 'game_server'",
+            "name": "Debug unit tests in executable 'udp_server'",
             "cargo": {
                 "args": [
                     "test",
                     "--no-run",
-                    "--bin=game_server",
-                    "--package=game_server"
+                    "--bin=udp_server",
+                    "--package=udp_server"
                 ],
                 "filter": {
-                    "name": "game_server",
+                    "name": "udp_server",
                     "kind": "bin"
                 }
             },

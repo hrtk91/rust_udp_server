@@ -3,7 +3,7 @@
         {
             "req_type": "create_room",
             "payload": "{\"name\": \"TestRoom\", \"password\": \"\" }"
-        },    
+        },
         {
             "req_type": "add_user",
             "payload": "{\"user_id\": \"test1\", \"room_name\":\"TestRoom\",  \"x\": 0, \"y\": 0 }"
