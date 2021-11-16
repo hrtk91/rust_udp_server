@@ -14,10 +14,7 @@ fn main() {
 
     loop {
         let body = match udp_server.try_recv() {
-            Ok(msg) => match msg.request {
-                Some(req) => req.body.trim_end().to_string(),
-                None => "".to_string(),
-            }
+            Ok(req) => req.body.trim_end().to_string(),
             Err(e) => match e {
                 TryRecvError::Empty => "".to_string(),
                 TryRecvError::Disconnected => udp_server.quit_code.clone(),

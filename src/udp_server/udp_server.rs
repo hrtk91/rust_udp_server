@@ -22,8 +22,14 @@ pub struct UdpServer {
 }
 
 impl UdpServer {
-    pub fn try_recv(&self) -> Result<UdpThreadMessage, TryRecvError> {
-        self.rx.try_recv()
+    pub fn try_recv(&self) -> Result<UdpRequest, TryRecvError> {
+        match self.rx.try_recv() {
+            Ok(msg) => match msg.request {
+                Some(req) => Ok(req),
+                None => Err(TryRecvError::Empty),
+            },
+            Err(e) => Err(e),
+        }
     }
 
     pub fn try_send(&self, response: String) -> Result<(), SendError<UdpThreadMessage>> {
@@ -117,7 +123,7 @@ pub fn listen(host: &str) -> Result<UdpServer, std::io::Error> {
                     }).expect("受信したデータの展開に失敗");
                 }
             }
-            
+
             buff = [0; 1024];
         }
     });
