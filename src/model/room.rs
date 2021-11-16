@@ -50,4 +50,25 @@ impl Room {
     
         Ok(())
     }
+
+    pub fn remove_user(&mut self, user_data: &UserData) -> Result<(), &str> {
+        if let None = user_data.x {
+            return Err("user_data.x is None");
+        } else if let None = user_data.y {
+            return Err("user_data.y is None");
+        };
+
+        match &mut self.users {
+            Some(users) => {
+                if let Some(idx) = users.iter_mut().position(|x|
+                    x.user_id == user_data.user_id || x.room_name == user_data.room_name) {
+                    users.remove(idx);
+                } else {
+                    return Err("user not found");
+                }
+                Ok(())
+            },
+            None => return Err("user not found :{:?}"),
+        }
+    }
 }

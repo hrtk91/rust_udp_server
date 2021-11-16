@@ -13,7 +13,7 @@ impl RoomManager {
         }
     }
 
-    pub fn create_room(&mut self, payload: Option<String>) -> Result<(), &str> {
+    pub fn create_room(&mut self, payload: Option<String>) -> Result<String, &str> {
         let payload = match payload {
             Some(payload) => payload,
             None => return Err("payload is None"),
@@ -33,7 +33,11 @@ impl RoomManager {
         } else {
             self.rooms.push(room);
             log::trace!("rooms: {:?}", self.rooms);
-            Ok(())
+
+            match serde_json::to_string(&self.rooms) {
+                Ok(json) => Ok(json),
+                Err(_) => return Err("failed serialize"),
+            }
         }
     }
 

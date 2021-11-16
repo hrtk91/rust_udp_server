@@ -1,5 +1,6 @@
 #[path = "model/model.rs"]
 mod model;
+#[path = "udp_server/udp_server.rs"]
 mod udp_server;
 use std::sync::mpsc::{ TryRecvError };
 use model::room_manager::RoomManager;
@@ -13,7 +14,10 @@ fn main() {
 
     loop {
         let body = match udp_server.try_recv() {
-            Ok(body) => body.trim_end().to_string(),
+            Ok(msg) => match msg.request {
+                Some(req) => req.body.trim_end().to_string(),
+                None => "".to_string(),
+            }
             Err(e) => match e {
                 TryRecvError::Empty => "".to_string(),
                 TryRecvError::Disconnected => udp_server.quit_code.clone(),
@@ -35,9 +39,12 @@ fn main() {
 
         match request.req_type.unwrap_or_default().as_str() {
             "create_room" => {
-                if let Err(e) = room_manager.create_room(request.payload) {
-                    log::trace!("ルーム作成に失敗。：{}", e);
-                }
+                match room_manager.create_room(request.payload) {
+                    Ok(json) => if let Err(_) = udp_server.try_send(json) {
+                        udp_server.send_error();
+                    },
+                    Err(_) => udp_server.send_error(),
+                };
             },
             "add_user" => {
                 if let Err(e) = room_manager.add_user(request.payload) {
