@@ -37,19 +37,30 @@ fn main() {
                 };
             },
             "add_user" => {
-                if let Err(e) = room_manager.add_user(request.payload) {
-                    log::trace!("ユーザー追加に失敗。：{}", e);
+                match room_manager.add_user(request.payload) {
+                    Ok(_) => udp_server.ok(udp_request.src_addr),
+                    Err(e) => {
+                        log::error!("ユーザー追加に失敗。：{}", e);
+                        udp_server.error(udp_request.src_addr);
+                    }
                 }
             },
             "update_user" => {
-                if let Err(e) = room_manager.update_user(request.payload) {
-                    log::trace!("ユーザー更新に失敗。：{}", e);
+                match room_manager.update_user(request.payload) {
+                    Ok(_) => udp_server.ok(udp_request.src_addr),
+                    Err(e) => {
+                        log::error!("ユーザー更新に失敗。：{}", e);
+                        udp_server.error(udp_request.src_addr);
+                    }
                 }
             },
             "remove_user" => {
                 match room_manager.remove_user(request.payload) {
                     Ok(_) => udp_server.ok(udp_request.src_addr),
-                    Err(_) => udp_server.error(udp_request.src_addr),
+                    Err(e) => {
+                        log::error!("ユーザー削除に失敗。：{}", e);
+                        udp_server.error(udp_request.src_addr)
+                    },
                 };
             },
             _ => (),
