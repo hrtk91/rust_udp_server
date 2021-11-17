@@ -1,5 +1,4 @@
 pub mod payload;
-
 use serde::{ Serialize, Deserialize };
 
 #[derive(Serialize, Deserialize, Debug, Default)]

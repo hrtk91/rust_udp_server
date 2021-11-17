@@ -1,6 +1,6 @@
 pub mod udp_request;
 pub mod udp_response;
-pub mod udp_thread_message;
+mod udp_thread_message;
 use udp_response::UdpResponse;
 use udp_request::UdpRequest;
 use std::net::SocketAddr;
@@ -22,27 +22,42 @@ pub struct UdpServer {
 }
 
 impl UdpServer {
-    pub fn try_recv(&self) -> Result<UdpRequest, TryRecvError> {
+    pub fn try_recv(&self) -> UdpRequest {
         match self.rx.try_recv() {
             Ok(msg) => match msg.request {
-                Some(req) => Ok(req),
-                None => Err(TryRecvError::Empty),
+                Some(req) => req,
+                None => UdpRequest::empty(),
             },
-            Err(e) => Err(e),
+            Err(e) => match e {
+                TryRecvError::Empty => UdpRequest::empty(),
+                TryRecvError::Disconnected => {
+                    let mut req = UdpRequest::empty();
+                    req.body = self.quit_code.clone();
+                    req
+                },
+            },
         }
     }
 
-    pub fn try_send(&self, response: String) -> Result<(), SendError<UdpThreadMessage>> {
+    pub fn try_send(&self, response: String, dst_addr: SocketAddr) -> Result<(), SendError<UdpThreadMessage>> {
         self.tx.send(UdpThreadMessage {
             request: None,
             response: Some(UdpResponse {
                 body: response,
+                dst_addr: dst_addr,
             }),
         })
     }
 
-    pub fn send_error(&self) -> () {
-        if let Err(_) = self.try_send("Internal Server Error".to_string()) {
+    pub fn ok(&self, dst_addr: SocketAddr) -> () {
+        if let Err(e) = self.try_send("{ \"status\": ok }".to_string(), dst_addr) {
+            log::error!("{:?}", e);
+        }
+    }
+
+    pub fn error(&self, dst_addr: SocketAddr) -> () {
+        let body = "{ \"status\":\"internal server error\"}".to_string();
+        if let Err(_) = self.try_send(body, dst_addr) {
             log::error!("failed send error");
         }
     }
@@ -52,7 +67,7 @@ impl UdpServer {
         self.tx.send(UdpThreadMessage {
             request: Some(UdpRequest {
                 body: self.quit_code,
-                requester_ip: SocketAddr::new(IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1)), 8080),
+                src_addr: SocketAddr::new(IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1)), 8080),
             }),
             response: None,
         }).unwrap();
@@ -71,27 +86,25 @@ pub fn listen(host: &str) -> Result<UdpServer, std::io::Error> {
         socket.set_nonblocking(true).unwrap();
         loop {
             let udp_req = match rx.try_recv() {
-                Ok(msg) => match msg.request {
-                    Some(req) => req,
-                    None => UdpRequest {
-                        body: "".to_string(),
-                        requester_ip: SocketAddr::new(IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1)), 8080),
-                    }
-                },
+                Ok(msg) => msg.response,
                 Err(e) => match e {
-                    TryRecvError::Empty => UdpRequest {
-                        body: "".to_string(),
-                        requester_ip: SocketAddr::new(IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1)), 8080),
-                    },
-                    TryRecvError::Disconnected => UdpRequest {
+                    TryRecvError::Disconnected => Some(UdpResponse {
                         body: ":q".to_string(),
-                        requester_ip: SocketAddr::new(IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1)), 8080),
-                    },
+                        dst_addr: SocketAddr::new(IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1)), 8080),
+                    }),
+                    TryRecvError::Empty => None,
                 }
             };
 
-            if udp_req.body == ":q" {
-                return;
+            if let Some(udp_req) = udp_req {
+                if udp_req.body == ":q" {
+                    return;
+                }
+                let body_bytes = udp_req.body.as_bytes();
+                match socket.send_to(body_bytes, udp_req.dst_addr) {
+                    Ok(_) => log::trace!("send {:?} to {:?}", udp_req.body, udp_req.dst_addr),
+                    Err(_) => log::error!("failed send {:?} to {:?}", udp_req.body, udp_req.dst_addr)
+                };
             }
             
             if let Ok((size, socket_addr)) = socket.recv_from(&mut buff) {
@@ -117,7 +130,7 @@ pub fn listen(host: &str) -> Result<UdpServer, std::io::Error> {
                     tx2.send(UdpThreadMessage {
                         request: Some(UdpRequest {
                             body: body.to_string(),
-                            requester_ip: socket_addr,
+                            src_addr: socket_addr,
                         }),
                         response: None,
                     }).expect("受信したデータの展開に失敗");

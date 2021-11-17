@@ -2,7 +2,6 @@
 mod model;
 #[path = "udp_server/udp_server.rs"]
 mod udp_server;
-use std::sync::mpsc::{ TryRecvError };
 use model::room_manager::RoomManager;
 use model::request::{ Request };
 
@@ -13,21 +12,15 @@ fn main() {
     let mut room_manager = RoomManager::new();
 
     loop {
-        let body = match udp_server.try_recv() {
-            Ok(req) => req.body.trim_end().to_string(),
-            Err(e) => match e {
-                TryRecvError::Empty => "".to_string(),
-                TryRecvError::Disconnected => udp_server.quit_code.clone(),
-            }
-        };
+        let udp_request = udp_server.try_recv();
 
-        match body.as_str() {
+        match udp_request.body.trim_end() {
             v if v == udp_server.quit_code.as_str() => break,
             "" => continue,
             _ => (),
         };
 
-        let request: Request = match serde_json::from_str(&body) {
+        let request: Request = match serde_json::from_str(&udp_request.body) {
             Ok(json) => json,
             Err(_) => serde_json::from_str("{}").unwrap(),
         };
@@ -37,10 +30,10 @@ fn main() {
         match request.req_type.unwrap_or_default().as_str() {
             "create_room" => {
                 match room_manager.create_room(request.payload) {
-                    Ok(json) => if let Err(_) = udp_server.try_send(json) {
-                        udp_server.send_error();
+                    Ok(json) => if let Err(_) = udp_server.try_send(json, udp_request.src_addr) {
+                        udp_server.error(udp_request.src_addr);
                     },
-                    Err(_) => udp_server.send_error(),
+                    Err(_) => udp_server.error(udp_request.src_addr),
                 };
             },
             "add_user" => {
@@ -54,8 +47,10 @@ fn main() {
                 }
             },
             "remove_user" => {
-                // update_user(&mut rooms, request.payload)
-                //     .expect("ユーザー更新に失敗");
+                match room_manager.remove_user(request.payload) {
+                    Ok(_) => udp_server.ok(udp_request.src_addr),
+                    Err(_) => udp_server.error(udp_request.src_addr),
+                };
             },
             _ => (),
         };

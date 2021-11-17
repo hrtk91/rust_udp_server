@@ -78,4 +78,23 @@ impl RoomManager {
 
         room.update_user(&user_data)
     }
+
+    pub fn remove_user(&mut self, payload: Option<String>) -> Result<(), &str> {
+        let payload = match payload {
+            Some(payload) => payload,
+            None => return Err("payload is None"),
+        };
+    
+        let user_data: UserData = match serde_json::from_str(&payload) {
+            Ok(json) => json,
+            Err(_) =>  return Err("json serialize failed"),
+        };
+    
+        let room = match self.rooms.iter_mut().find(|x| x.name == user_data.room_name) {
+            Some(room) => room,
+            None => return Err("room not found : {:?}"),
+        };
+
+        room.remove_user(&user_data)
+    }
 }
