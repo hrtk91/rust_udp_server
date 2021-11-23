@@ -1,15 +1,21 @@
 {
     "testdata": [
         {
-            "req_type": "create_room",
+            "header": {
+                "req_path": "/Room/Create"
+            },
             "payload": "{\"name\": \"TestRoom\", \"password\": \"\" }"
         },
         {
-            "req_type": "add_user",
+            "header": {
+                "req_path": "/User/Create"
+            },
             "payload": "{\"user_id\": \"test1\", \"room_name\":\"TestRoom\",  \"x\": 0, \"y\": 0 }"
         },
         {
-            "req_type": "update_user",
+            "header": {
+                "req_path": "/User/Update"
+            },
             "payload": "{\"user_id\": \"test1\", \"room_name\":\"TestRoom\",  \"x\": 3, \"y\": 4 }"
         }
     ]

@@ -1,5 +1,5 @@
 use serde::{ Serialize, Deserialize };
-use crate::model::request::payload::{ UserData };
+use crate::mvc::request::payload::{ UserData };
 
 #[derive(Serialize, Deserialize, Debug, Default)]
 pub struct Room {

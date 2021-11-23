@@ -49,8 +49,20 @@ impl UdpServer {
         })
     }
 
+    pub fn send_or_error(&self, response: String, dst_addr: SocketAddr) -> () {
+        if let Err(_) = self.try_send(response, dst_addr) {
+            self.error(dst_addr);
+        }
+    }
+
     pub fn ok(&self, dst_addr: SocketAddr) -> () {
-        if let Err(e) = self.try_send("{ \"status\": ok }".to_string(), dst_addr) {
+        if let Err(e) = self.try_send("{ \"status\": \"ok\" }".to_string(), dst_addr) {
+            log::error!("{:?}", e);
+        }
+    }
+    
+    pub fn bad_request(&self, dst_addr: SocketAddr) -> () {
+        if let Err(e) = self.try_send("{ \"status\": \"bad_request\" }".to_string(), dst_addr) {
             log::error!("{:?}", e);
         }
     }

@@ -1,6 +1,6 @@
 use serde_json;
 use crate::model::room::{ Room };
-use crate::model::request::payload::{ UserData };
+use crate::mvc::request::payload::{ UserData };
 
 pub struct RoomManager {
     rooms: Vec<Room>,
