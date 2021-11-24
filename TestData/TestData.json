@@ -8,15 +8,21 @@
         },
         {
             "header": {
-                "req_path": "/User/Create"
+                "req_path": "/Room/User/Add"
             },
             "payload": "{\"user_id\": \"test1\", \"room_name\":\"TestRoom\",  \"x\": 0, \"y\": 0 }"
         },
         {
             "header": {
-                "req_path": "/User/Update"
+                "req_path": "/Room/User/Update"
             },
             "payload": "{\"user_id\": \"test1\", \"room_name\":\"TestRoom\",  \"x\": 3, \"y\": 4 }"
+        },
+        {
+            "header": {
+                "req_path": "/Room/User/Remove"
+            },
+            "payload": "{\"user_id\": \"test1\", \"room_name\":\"TestRoom\" }"
         }
     ]
 }

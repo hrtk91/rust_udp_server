@@ -14,6 +14,11 @@ use middleware::Middleware;
 use request::Request;
 use util::AsAny;
 
+pub enum Scope {
+    Singleton,
+    Transient,
+}
+
 pub struct Mvc {
     singletons: HashMap<String, Box<dyn Any>>,
     transients: HashMap<String, Box<dyn Any>>,
@@ -40,8 +45,11 @@ impl Mvc {
         self
     }
 
-    pub fn get(&self, key: &str) -> Option<&Box<dyn Any>> {
-        self.transients.get(key)
+    pub fn get(&mut self, key: &str, scope: Scope) -> Option<&mut Box<dyn Any>> {
+        match scope {
+            Scope::Singleton => self.singletons.get_mut(key),
+            Scope::Transient => self.transients.get_mut(key),
+        }
     }
 
     pub fn invoke_middlewares(&mut self, request: &mut Request) -> Result<(), String> {

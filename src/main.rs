@@ -9,12 +9,13 @@ mod controller;
 use std::any::Any;
 use controller::RoomController;
 use model::room_manager::RoomManager;
-use mvc::Mvc;
+use mvc::{ Mvc, Scope };
 use mvc::request::{ Request };
 use mvc::middleware::{ PathFilter };
 use mvc::util::AsAny;
 use mvc::controller::Controller;
 
+#[macro_export]
 macro_rules! nameof {
     ($ty: ty) => {
         stringify!($ty)
@@ -66,10 +67,10 @@ fn main() {
             None => "",
         };
 
-        if let Some(func) = mvc.get(&format!("{}Controller", controller_name)) {
+        if let Some(func) = mvc.get(&format!("{}Controller", controller_name), Scope::Transient) {
             let func = func.downcast_ref::<Box<dyn Fn() -> Box<dyn Any>>>().unwrap();
             let mut controller = func().downcast::<Box<dyn Controller>>().unwrap();
-            let resp = match controller.invoke(&mut request) {
+            let resp = match controller.invoke(&mut request, &mut mvc) {
                 Ok(resp) => match serde_json::to_string(&resp) {
                     Ok(json) => json,
                     Err(e) => {
@@ -87,48 +88,6 @@ fn main() {
 
             udp_server.send_or_error(resp, udp_request.src_addr);
         };
-
-        /*
-        match req_path {
-            "create_room" => {
-                match room_manager.create_room(Some(request.payload)) {
-                    Ok(json) => if let Err(_) = udp_server.try_send(json, udp_request.src_addr) {
-                        udp_server.error(udp_request.src_addr);
-                    },
-                    Err(_) => udp_server.error(udp_request.src_addr),
-                };
-            },
-            "add_user" => {
-                match room_manager.add_user(Some(request.payload)) {
-                    Ok(_) => udp_server.ok(udp_request.src_addr),
-                    Err(e) => {
-                        log::error!("ユーザー追加に失敗。：{}", e);
-                        udp_server.error(udp_request.src_addr);
-                    }
-                }
-            },
-            "update_user" => {
-                match room_manager.update_user(Some(request.payload)) {
-                    Ok(_) => udp_server.ok(udp_request.src_addr),
-                    Err(e) => {
-                        log::error!("ユーザー更新に失敗。：{}", e);
-                        udp_server.error(udp_request.src_addr);
-                    }
-                }
-            },
-            "remove_user" => {
-                match room_manager.remove_user(Some(request.payload)) {
-                    Ok(_) => udp_server.ok(udp_request.src_addr),
-                    Err(e) => {
-                        log::error!("ユーザー削除に失敗。：{}", e);
-                        udp_server.error(udp_request.src_addr)
-                    },
-                };
-            },
-            _ => (),
-        };
-        */
-        
     }
 
     udp_server.close();

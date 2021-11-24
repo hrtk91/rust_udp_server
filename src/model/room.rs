@@ -19,10 +19,10 @@ impl Room {
         }
     }
 
-    pub fn add_user(&mut self, user_data: UserData) -> Result<(), &str> {
+    pub fn add_user(&mut self, user_data: UserData) -> Result<(), String> {
         let users = match &mut self.users {
             Some(users) => users,
-            None => return Err("users is None"),
+            None => return Err("users is None".to_string()),
         };
 
         log::trace!("room \"{}\" add user : {:?}", self.name.as_ref().unwrap(), user_data);
@@ -32,11 +32,11 @@ impl Room {
         Ok(())
     }
 
-    pub fn update_user(&mut self, user_data: &UserData) -> Result<(), &str> {
+    pub fn update_user(&mut self, user_data: &UserData) -> Result<(), String> {
         if let None = user_data.x {
-            return Err("user_data.x is None");
+            return Err("user_data.x is None".to_string());
         } else if let None = user_data.y {
-            return Err("user_data.y is None");
+            return Err("user_data.y is None".to_string());
         };
 
         let user = self.find_user(user_data)?;
@@ -51,11 +51,11 @@ impl Room {
         Ok(())
     }
 
-    pub fn remove_user(&mut self, user_data: &UserData) -> Result<(), &str> {
+    pub fn remove_user(&mut self, user_data: &UserData) -> Result<(), String> {
         if let None = user_data.x {
-            return Err("user_data.x is None");
+            return Err("user_data.x is None".to_string());
         } else if let None = user_data.y {
-            return Err("user_data.y is None");
+            return Err("user_data.y is None".to_string());
         };
 
         match &mut self.users {
@@ -64,11 +64,11 @@ impl Room {
                     x.user_id == user_data.user_id || x.room_name == user_data.room_name) {
                     users.remove(idx);
                 } else {
-                    return Err("user not found");
+                    return Err("user not found".to_string());
                 }
                 Ok(())
             },
-            None => return Err("user not found :{:?}"),
+            None => return Err("user not found :{:?}".to_string()),
         }
     }
 }
